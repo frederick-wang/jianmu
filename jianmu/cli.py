@@ -26,7 +26,8 @@ def create(args):
     print(f' * Creating a new Jianmu project named {project_name}')
     template_url = 'https://ghproxy.com/https://github.com/frederick-wang/jianmu-template/archive/main.zip'
     print(' * Downloading the template...')
-    print('(This may take a while, and the program will wait at most 30 seconds)')
+    print(
+        '(This may take a while, and the program will wait at most 30 seconds)')
     try:
         req = requests.get(template_url, timeout=30)
     except requests.exceptions.RequestException as e:
@@ -46,10 +47,19 @@ def create(args):
         print(' * NPM is not installed.')
         exit(0)
     print(' * Installing Node.js dependencies...')
-    proc = subprocess.run([
-        NPM_EXECUTABLE, 'install', '--registry=https://registry.npmmirror.com'
-    ],
-                          cwd=str(project_dir))
+    env = {
+        **os.environ,
+        'ELECTRON_MIRROR':
+            'https://npmmirror.com/mirrors/electron/',
+    }
+    proc = subprocess.run(
+        [
+            NPM_EXECUTABLE, 'install',
+            '--registry=https://registry.npmmirror.com'
+        ],
+        cwd=str(project_dir),
+        env=env,
+    )
     if proc.returncode:
         print(' *  Install Node.js dependencies failed.')
         exit(0)
