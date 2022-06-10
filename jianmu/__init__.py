@@ -1,1 +1,3 @@
-from .jm_exceptions import JianmuException
+from .exceptions import JianmuException
+
+__all__ = ['JianmuException']

@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Any, Callable, Dict, List, Sequence, Union
 from inspect import signature
 from flask import Flask, request
-from jm_exceptions import JianmuException
+from exceptions import JianmuException
 
 CWD = str(Path.cwd())
 if CWD not in sys.path:
