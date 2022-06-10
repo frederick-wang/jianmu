@@ -6,8 +6,6 @@ import sys
 from argparse import ArgumentParser
 from pathlib import Path
 
-from ..utils import clear_console
-
 
 def init_parser(subparsers):
     parser: ArgumentParser = subparsers.add_parser(
@@ -19,6 +17,10 @@ def __func(args):
     CWD_PATH = Path.cwd()
     PYTHON_EXECUTABLE = sys.executable
     NPM_EXECUTABLE = str(shutil.which('npm'))
+    PROJECT_LOG_DIR_PATH = CWD_PATH / '.jianmu' / 'logs'
+    PROJECT_LOG_DIR_PATH.mkdir(parents=True, exist_ok=True)
+    JM_LOG_PATH = PROJECT_LOG_DIR_PATH / 'jm.log'
+    f_jm_log = open(JM_LOG_PATH, 'w', encoding='utf-8')
     if not NPM_EXECUTABLE:
         print(' * NPM is not installed.')
         exit(0)
@@ -47,7 +49,9 @@ def __func(args):
         flask_process = subprocess.Popen(args=[PYTHON_EXECUTABLE,
                                                str(JM_PATH)],
                                          cwd=str(CWD_PATH),
-                                         env=env)
+                                         env=env,
+                                         stdout=f_jm_log,
+                                         stderr=f_jm_log)
     except Exception as e:
         print(e)
         print(' * Failed to start the jianmu application.')
