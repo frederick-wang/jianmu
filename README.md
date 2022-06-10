@@ -57,3 +57,9 @@ To build your application for a software release, navigate to your project direc
 ```sh
 jianmu build
 ```
+
+To clean runtime temporary files in project directory, navigate to your project directory and run:
+
+```sh
+jianmu clean
+```

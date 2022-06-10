@@ -1,7 +1,7 @@
 import argparse
 
 from ..info import version
-from . import build, create, dev, start, upgrade
+from . import build, clean, create, dev, start, upgrade
 
 parser = argparse.ArgumentParser(
     prog='jianmu',
@@ -29,6 +29,7 @@ def init_parser():
     dev.init_parser(subparsers)
     start.init_parser(subparsers)
     build.init_parser(subparsers)
+    clean.init_parser(subparsers)
 
 
 def __func(args):
