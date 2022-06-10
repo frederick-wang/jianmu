@@ -25,6 +25,11 @@ setup(
         'Environment :: Console',
         'License :: OSI Approved :: Apache Software License',
         'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
     ],
     install_requires=[
         'Flask',
@@ -34,5 +39,5 @@ setup(
     entry_points={
         'console_scripts': ['jianmu=jianmu.cli:parse'],
     },
-    python_requires=">=3.6",
+    python_requires=">=3.6, <=3.10",
 )
