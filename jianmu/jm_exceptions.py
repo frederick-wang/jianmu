@@ -1,0 +1,2 @@
+class JianmuException(Exception):
+    pass
