@@ -1,4 +1,5 @@
 from setuptools import setup
+import setuptools
 
 from jianmu.info import version
 
@@ -29,7 +30,7 @@ setup(
         'Flask',
         'requests',
     ],
-    packages=['jianmu'],
+    packages=setuptools.find_packages(include=['jianmu', 'jianmu.*']),
     entry_points={
         'console_scripts': ['jianmu=jianmu.cli:parse'],
     },

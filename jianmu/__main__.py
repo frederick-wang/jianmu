@@ -1,4 +1,4 @@
-from .cli import parse
+from . import cli
 
 if __name__ == '__main__':
-    parse()
+    cli.parse()
