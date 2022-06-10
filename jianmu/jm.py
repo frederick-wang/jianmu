@@ -1,8 +1,10 @@
 import sys
+from inspect import signature
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Sequence, Union
-from inspect import signature
+
 from flask import Flask, request
+
 from exceptions import JianmuException
 
 CWD = str(Path.cwd())

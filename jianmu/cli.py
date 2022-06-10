@@ -11,6 +11,8 @@ from pathlib import Path
 
 import requests
 
+from .info import version
+
 
 def create(args):
     if args.project_name is None:
@@ -47,19 +49,10 @@ def create(args):
         print(' * NPM is not installed.')
         exit(0)
     print(' * Installing Node.js dependencies...')
-    env = {
-        **os.environ,
-        'ELECTRON_MIRROR':
-            'https://npmmirror.com/mirrors/electron/',
-    }
-    proc = subprocess.run(
-        [
-            NPM_EXECUTABLE, 'install',
-            '--registry=https://registry.npmmirror.com'
-        ],
-        cwd=str(project_dir),
-        env=env,
-    )
+    proc = subprocess.run([
+        NPM_EXECUTABLE, 'install', '--registry=https://registry.npmmirror.com'
+    ],
+                          cwd=str(project_dir))
     if proc.returncode:
         print(' *  Install Node.js dependencies failed.')
         exit(0)
@@ -146,7 +139,10 @@ parser = argparse.ArgumentParser(
     description=
     'A simple desktop app development framework combining Python, Vue.js, Element Plus and Electron.',
 )
-parser.add_argument('--version', action='version', version='%(prog)s 0.0.2')
+parser.add_argument('-v',
+                    '--version',
+                    action='version',
+                    version=f'%(prog)s {version}')
 parser.set_defaults(func=default)
 subparsers = parser.add_subparsers()
 parser_create = subparsers.add_parser('create',

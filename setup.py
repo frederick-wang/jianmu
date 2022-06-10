@@ -1,11 +1,13 @@
 from setuptools import setup
 
+from jianmu.info import version
+
 with open("README.md", "r", encoding="utf-8") as f:
     long_description = f.read()
 
 setup(
     name='Jianmu',
-    version='0.0.2',
+    version=version,
     description=
     'A simple desktop app development framework combining Python, Vue.js, Element Plus and Electron.',
     long_description=long_description,
