@@ -146,7 +146,7 @@ parser = argparse.ArgumentParser(
     description=
     'A simple desktop app development framework combining Python, Vue.js, Element Plus and Electron.',
 )
-parser.add_argument('--version', action='version', version='%(prog)s 0.0.1')
+parser.add_argument('--version', action='version', version='%(prog)s 0.0.2')
 parser.set_defaults(func=default)
 subparsers = parser.add_subparsers()
 parser_create = subparsers.add_parser('create',

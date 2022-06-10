@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as f:
 
 setup(
     name='Jianmu',
-    version='0.0.1',
+    version='0.0.2',
     description=
     'A simple desktop app development framework combining Python, Vue.js, Element Plus and Electron.',
     long_description=long_description,
