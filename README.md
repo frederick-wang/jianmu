@@ -34,6 +34,12 @@ To create a new project, run:
 jianmu create <project-name>
 ```
 
+To upgrade the template of your project, navigate to the project directory and run:
+
+```sh
+jianmu upgrade
+```
+
 To run your application in development mode, navigate to your project directory and run:
 
 ```sh
