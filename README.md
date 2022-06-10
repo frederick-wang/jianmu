@@ -13,7 +13,7 @@ We recommend using the latest version of Python. Jianmu supports Python 3.6 and 
 To install the jianmu package, use the following command:
 
 ```sh
-pip install jianmu
+python -m pip install jianmu -U
 ```
 
 Jianmu is now installed. After installation, you will have access to the `jianmu` binary in your command line. You can verify that it is properly installed by simply running `jianmu` command or `python -m jianmu`, which should present you with a help message listing all available commands.
