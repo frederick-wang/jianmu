@@ -6,6 +6,7 @@ from typing import Any, Callable, Dict, List, Sequence, Union
 from flask import Flask, request
 
 from exceptions import JianmuException
+from info import jianmu_info
 
 CWD = str(Path.cwd())
 if CWD not in sys.path:
@@ -22,16 +23,7 @@ def index():
 
 
 def get_info():
-    data = {
-        'executable': sys.executable,
-        'version': sys.version,
-        'versionInfo': sys.version_info,
-        'executableDir': str(Path(sys.executable).parent.resolve().absolute()),
-        'currentDir': str(Path(__file__).parent.resolve().absolute()),
-        'platform': sys.platform,
-        'cwd': str(Path.cwd().resolve().absolute()),
-    }
-    return data, '获取程序信息成功'
+    return jianmu_info, '获取程序信息成功'
 
 
 JSONValue = Union[str, int, float, bool, None, Dict[str, 'JSONValue'],
