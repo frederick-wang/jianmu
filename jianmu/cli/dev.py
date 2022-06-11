@@ -72,6 +72,8 @@ def __func(args):
         clean()
 
     signal.signal(signal.SIGINT, on_sigint)
+    
+    print(' * You can stop the jianmu application by pressing Ctrl+C.')
 
     while True:
         try:
