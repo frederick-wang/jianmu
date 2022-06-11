@@ -1,7 +1,7 @@
 from pathlib import Path
 import sys
 
-version = '0.0.6'
+version = '0.0.7'
 
 python_executable = sys.executable
 
