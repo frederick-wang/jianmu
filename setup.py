@@ -31,10 +31,7 @@ setup(
         'Programming Language :: Python :: 3.9',
         'Programming Language :: Python :: 3.10',
     ],
-    install_requires=[
-        'Flask',
-        'requests',
-    ],
+    install_requires=['Flask', 'requests', 'gevent'],
     packages=setuptools.find_packages(include=['jianmu', 'jianmu.*']),
     entry_points={
         'console_scripts': ['jianmu=jianmu.cli:parse'],

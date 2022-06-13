@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Any, Callable, Dict, List, Sequence, Union
 
 from flask import Flask, request
+from gevent.pywsgi import WSGIServer
 
 from exceptions import JianmuException
 from info import jianmu_info
@@ -14,10 +15,10 @@ if CWD not in sys.path:
 
 from src import app
 
-server = Flask(__name__)
+flask_app = Flask(__name__)
 
 
-@server.route('/')
+@flask_app.route('/')
 def index():
     return '<h1>Powered by Jianmu Framework</h1>'
 
@@ -41,6 +42,8 @@ def respond(error: int, message: str, data: JSONValue) -> Dict[str, Any]:
 def wrapper(func: Callable):
 
     def view_func():
+        sys.stdout.write(f'Function {func.__name__} is called.\n')
+        sys.stdout.flush()
         try:
             param_num = len(signature(func).parameters)
             json = request.get_json()
@@ -81,10 +84,12 @@ if __name__ == '__main__':
             func = val
             rule = f'/api/{func_name}'
             view_func = wrapper(func)
-            print(f' * [add_url_rule: rule={rule}, func={func_name}]')
-            server.add_url_rule(rule, func_name, view_func, methods=['POST'])
-    server.add_url_rule('/api/info',
-                        'info',
-                        wrapper(get_info),
-                        methods=['POST'])
-    server.run(port=19020, host='0.0.0.0', debug=True)
+            sys.stderr.write(f'Function {func_name} is registered.\n')
+            sys.stderr.flush()
+            flask_app.add_url_rule(rule, func_name, view_func, methods=['POST'])
+    flask_app.add_url_rule('/api/info',
+                           'info',
+                           wrapper(get_info),
+                           methods=['POST'])
+    http_server = WSGIServer(('127.0.0.1', 19020), flask_app)
+    http_server.serve_forever()
