@@ -22,7 +22,7 @@ We recommend using the latest version of Python. Jianmu supports Python 3.6 and 
 
 ### Install Jianmu
 
-To install the jianmu package, use the following command:
+To install the [Jianmu package](https://pypi.org/project/Jianmu/), use the following command:
 
 ```sh
 python -m pip install jianmu -U
