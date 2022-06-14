@@ -1,0 +1,11 @@
+{
+  "recommendations": [
+    "editorconfig.editorconfig",
+    "wayou.vscode-todo-highlight",
+    "ms-python.python",
+    "njpwerner.autodocstring",
+    "visualstudioexptteam.vscodeintellicode",
+    "kevinrose.vsc-python-indent",
+    "aaron-bond.better-comments"
+  ]
+}
