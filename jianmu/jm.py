@@ -12,6 +12,9 @@ from info import jianmu_info
 CWD = str(Path.cwd())
 if CWD not in sys.path:
     sys.path.insert(0, CWD)
+SRC = str(Path.cwd() / 'src')
+if SRC not in sys.path:
+    sys.path.insert(0, SRC)
 
 from src import app
 
