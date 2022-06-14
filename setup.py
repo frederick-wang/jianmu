@@ -23,6 +23,8 @@ setup(
         'Operating System :: OS Independent',
         'Development Status :: 2 - Pre-Alpha',
         'Environment :: Console',
+        'Environment :: MacOS X',
+        'Environment :: Win32 (MS Windows)',
         'License :: OSI Approved :: Apache Software License',
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.6',
