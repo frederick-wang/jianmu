@@ -11,7 +11,7 @@ A simple desktop app development framework combining Python, Vue.js, Element Plu
 
 
 <p align="center">
-<img src="https://img.shields.io/pypi/pyversions/Jianmu" alt="pyversions"> <img src="https://img.shields.io/pypi/v/Jianmu" alt="version"> <img src="https://img.shields.io/pypi/l/Jianmu" alt="license"> <img src="https://img.shields.io/github/last-commit/frederick-wang/jianmu" alt="last-commit"> <img src="https://img.shields.io/github/commit-activity/m/frederick-wang/jianmu" alt="commit-activity"></img>
+<img src="https://img.shields.io/pypi/pyversions/Jianmu" alt="pyversions"> <img src="https://img.shields.io/pypi/v/Jianmu" alt="version"> <img src="https://img.shields.io/pypi/l/Jianmu" alt="license"> <img src="https://img.shields.io/github/last-commit/frederick-wang/jianmu" alt="last-commit"> <img src="https://img.shields.io/github/commit-activity/m/frederick-wang/jianmu" alt="commit-activity">
 </p>
 
 ## Installation
@@ -73,3 +73,15 @@ To clean runtime temporary files in project directory, navigate to your project 
 ```sh
 jianmu clean
 ```
+
+## Screenshots
+
+<p align="center">
+<br>
+<img width="640" src="https://raw.githubusercontent.com/frederick-wang/jianmu/main/docs/images/ui_screenshot.png" alt="Jianmu UI Screenshot" style="box-shadow: 0px 0px 12px rgba(0, 0, 0, .12);">
+<br>
+<br>
+<img width="640" src="https://raw.githubusercontent.com/frederick-wang/jianmu/main/docs/images/console_screenshot.png" alt="Jianmu Console Screenshot" style="box-shadow: 0px 0px 12px rgba(0, 0, 0, .12);">
+<br>
+<br>
+</p>
