@@ -3,10 +3,9 @@ from inspect import signature
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Sequence, Union
 
+from exceptions import JianmuException
 from flask import Flask, request
 from gevent.pywsgi import WSGIServer
-
-from exceptions import JianmuException
 from info import jianmu_info
 
 CWD = str(Path.cwd())
