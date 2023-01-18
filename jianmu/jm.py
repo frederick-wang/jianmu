@@ -110,7 +110,7 @@ def register_reactive_var(name: str, var: Ref):
         if not sync_lock:
             socketio.emit(event_name, {'data': var.value})
 
-    watch(var, cb)
+    watch(var, cb, deep=True)
 
     if not sync_lock:
         socketio.emit(event_name, {'data': var.value})
