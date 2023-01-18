@@ -1,32 +1,39 @@
 # sourcery skip: avoid-builtin-shadow
+import contextlib
 import sys
-
-import reactivity as reactivity_module
-from reactivity import Ref, is_computed_ref, is_reactive, is_ref, reactive, ref, watch
+import base64
 
 sys.stdout = open(sys.stdout.fileno(), mode='w', encoding='utf8', buffering=1)  # Set stdout to unbuffered mode
 sys.stderr = open(sys.stderr.fileno(), mode='w', encoding='utf8', buffering=1)  # Set stderr to unbuffered mode
 
+import os
 from inspect import signature
 from pathlib import Path
 from typing import Any, Callable, Dict, List
 
-from flask import Flask, request
+import reactivity as reactivity_module
+from flask import Flask, jsonify, request
 from flask_socketio import SocketIO
+from reactivity import (Ref, is_computed_ref, is_reactive, is_ref, reactive, ref, watch)
 
 from jianmu.datatypes import JSONValue
 from jianmu.exceptions import JianmuException
 from jianmu.info import jianmu_info
 
-CWD = str(Path.cwd())
-if CWD not in sys.path:
-    sys.path.insert(0, CWD)
-SRC = str(Path.cwd() / 'src')
-if SRC not in sys.path:
-    sys.path.insert(0, SRC)
-
 flask_app = Flask(__name__)
 socketio = SocketIO(flask_app, cors_allowed_origins='*')
+
+for module_name in os.listdir(Path.cwd()):
+    if module_name.endswith('.py') and os.path.isfile(module_name):
+        module_name = module_name[:-3]
+    if module_name.startswith('__') and module_name.endswith('__'):
+        continue
+    if module_name == 'app':
+        continue
+    with contextlib.suppress(ImportError):
+        module = __import__(f'src.{module_name}', fromlist=[module_name])
+        sys.modules[module_name] = module
+        del sys.modules[f'src.{module_name}']
 
 from src import app  # type: ignore
 
