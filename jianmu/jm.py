@@ -1,7 +1,6 @@
 # sourcery skip: avoid-builtin-shadow
 import contextlib
 import sys
-import base64
 
 sys.stdout = open(sys.stdout.fileno(), mode='w', encoding='utf8', buffering=1)  # Set stdout to unbuffered mode
 sys.stderr = open(sys.stderr.fileno(), mode='w', encoding='utf8', buffering=1)  # Set stderr to unbuffered mode
@@ -14,7 +13,8 @@ from typing import Any, Callable, Dict, List
 import reactivity as reactivity_module
 from flask import Flask, jsonify, request
 from flask_socketio import SocketIO
-from reactivity import (Ref, is_computed_ref, is_reactive, is_ref, reactive, ref, watch)
+from reactivity import (Ref, is_computed_ref, is_reactive, is_ref, reactive,
+                        ref, watch)
 
 from jianmu.datatypes import JSONValue
 from jianmu.exceptions import JianmuException
