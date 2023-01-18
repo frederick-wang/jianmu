@@ -1,6 +1,9 @@
 # sourcery skip: avoid-builtin-shadow
 import sys
 
+import reactivity as reactivity_module
+from reactivity import Ref, is_computed_ref, is_reactive, is_ref, reactive, ref, watch
+
 sys.stdout = open(sys.stdout.fileno(), mode='w', encoding='utf8', buffering=1)  # Set stdout to unbuffered mode
 sys.stderr = open(sys.stderr.fileno(), mode='w', encoding='utf8', buffering=1)  # Set stderr to unbuffered mode
 
@@ -14,8 +17,6 @@ from flask_socketio import SocketIO
 from jianmu.datatypes import JSONValue
 from jianmu.exceptions import JianmuException
 from jianmu.info import jianmu_info
-import jianmu.pyvar as pyvar_module
-from jianmu.pyvar import init_pyvar_socketio, register_pyvar, Ref, get_registered_pyvars, AbstractRef
 
 CWD = str(Path.cwd())
 if CWD not in sys.path:
@@ -26,7 +27,6 @@ if SRC not in sys.path:
 
 flask_app = Flask(__name__)
 socketio = SocketIO(flask_app, cors_allowed_origins='*')
-init_pyvar_socketio(socketio)
 
 from src import app  # type: ignore
 
@@ -38,10 +38,6 @@ def index():
 
 def get_info():
     return jianmu_info, '获取程序信息成功'
-
-
-def registered_pyvars():
-    return get_registered_pyvars(), '获取已注册的响应式变量成功'
 
 
 def respond(error: int, message: str, data: JSONValue) -> Dict[str, Any]:
@@ -85,27 +81,61 @@ def wrapper(func: Callable):
     return view_func
 
 
+def register_reactive_var(name: str, var: Ref):
+    event_name = f'pyvar_{name}'
+    is_computed = is_computed_ref(val)
+
+    sync_lock = False
+
+    @socketio.on(f'{event_name}__get')
+    def on_pyvar_get():
+        socketio.emit(event_name, {'data': var.value})
+
+    @socketio.on(event_name)
+    def on_pyvar_change(res: 'dict[str, Any]'):
+
+        nonlocal sync_lock
+        if is_computed:
+            socketio.emit(f'{event_name}__synced')
+            return
+        if 'data' not in res:
+            raise RuntimeError('The data field is missing')
+        value = res['data']
+        sync_lock = True
+        var.value = value
+        sync_lock = False
+        socketio.emit(f'{event_name}__synced')
+
+    def cb():
+        if not sync_lock:
+            socketio.emit(event_name, {'data': var.value})
+
+    watch(var, cb)
+
+    if not sync_lock:
+        socketio.emit(event_name, {'data': var.value})
+
+
 if __name__ == '__main__':
     for key, val in app.__dict__.items():
         if key[:2] != '__':
-            if isinstance(val, AbstractRef):  # Reactive Variable
+            if is_ref(val):  # Reactive Variable
                 var_name = key
                 var = val
-                register_pyvar(var, var_name)
+                register_reactive_var(var_name, var)
                 sys.stderr.write(f'Reactive Variable {var_name} is registered.\n')
             elif callable(val):  # Python Function
                 if isinstance(val, type):
                     continue
                 func_name = key
                 func = val
-                if func_name in pyvar_module.__dict__:
+                if func_name in reactivity_module.__dict__:
                     continue
                 rule = f'/api/{func_name}'
                 view_func = wrapper(func)
                 sys.stderr.write(f'Python Function {func_name} is registered.\n')
                 flask_app.add_url_rule(rule, func_name, view_func, methods=['POST'])
     flask_app.add_url_rule('/api/info', 'info', wrapper(get_info), methods=['POST'])
-    flask_app.add_url_rule('/api/registered_pyvars', 'registered_pyvars', wrapper(registered_pyvars), methods=['POST'])
     # http_server = WSGIServer(('127.0.0.1', 19020), flask_app)
     # http_server.serve_forever()
     # Use socketio.run() instead of http_server.serve_forever() to enable

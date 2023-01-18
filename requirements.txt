@@ -1,0 +1,7 @@
+flask
+flask-socketio
+gevent
+gevent-websocket
+requests
+rich
+pyreactivity
