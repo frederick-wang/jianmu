@@ -1,5 +1,5 @@
 from . import exceptions, info
 from .definitions import File
-from .utils import base64_src_to_bytes, base64_to_bytes
+from .utils import datauri_to_bytes, base64_to_bytes, figure_to_datauri
 
-__all__ = ['exceptions', 'info', 'base64_src_to_bytes', 'base64_to_bytes', 'File']
+__all__ = ['exceptions', 'info', 'datauri_to_bytes', 'base64_to_bytes', 'File', 'figure_to_datauri']

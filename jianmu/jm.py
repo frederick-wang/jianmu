@@ -20,7 +20,7 @@ from jianmu.datatypes import JSONValue
 from jianmu.definitions import File
 from jianmu.exceptions import JianmuException
 from jianmu.info import jianmu_info
-from jianmu.utils import base64_src_to_bytes
+from jianmu.utils import datauri_to_bytes
 
 flask_app = Flask(__name__)
 socketio = SocketIO(flask_app, cors_allowed_origins='*')
@@ -50,7 +50,7 @@ def sync_file_data_to_file(file_data: Dict[str, Any]) -> File:
     return File(
         lastModified=file_data['lastModified'],
         name=file_data['name'],
-        bytes=base64_src_to_bytes(file_data['base64Src']),
+        bytes=datauri_to_bytes(file_data['base64Src']),
         path=file_data['path'],
         size=file_data['size'],
         type=file_data['type'],
@@ -153,37 +153,44 @@ def wrapper(func: Callable):
 
 def register_reactive_var(name: str, var: Ref):
     event_name = f'pyvar_{name}'
+    GET_PY_VALUE = f'{event_name}__get_py_value'
+    PUSH_PY_TO_JS = f'{event_name}__push_py_to_js'
+    PUSH_JS_TO_PY = f'{event_name}__push_js_to_py'
+    PY_SYNCED_WITH_JS = f'{event_name}__py_synced_with_js'
+    JS_SYNCED_WITH_PY = f'{event_name}__js_synced_with_py'
     is_computed = is_computed_ref(val)
 
-    sync_lock = False
+    is_syncing = False
 
-    @socketio.on(f'{event_name}__get')
-    def on_pyvar_get():
-        socketio.emit(event_name, {'data': py_data_to_sync_data(var.value)})
+    def set_sync_status_to_syncing():
+        nonlocal is_syncing
+        is_syncing = True
 
-    @socketio.on(event_name)
-    def on_pyvar_change(res: 'dict[str, Any]'):
+    @socketio.on(JS_SYNCED_WITH_PY)
+    def set_sync_status_to_synced():
+        nonlocal is_syncing
+        is_syncing = False
 
-        nonlocal sync_lock
+    @socketio.on(GET_PY_VALUE)
+    def push_py_to_js():
+        if not is_syncing:
+            set_sync_status_to_syncing()
+            socketio.emit(PUSH_PY_TO_JS, {'data': py_data_to_sync_data(var.value)})
+
+    @socketio.on(PUSH_JS_TO_PY)
+    def sync_py_with_js(res: 'dict[str, Any]'):
         if is_computed:
-            socketio.emit(f'{event_name}__synced')
+            socketio.emit(PY_SYNCED_WITH_JS)
             return
         if 'data' not in res:
             raise RuntimeError('The data field is missing')
         value = res['data']
-        sync_lock = True
+        set_sync_status_to_syncing()
         var.value = sync_object_to_py_data(value)
-        sync_lock = False
-        socketio.emit(f'{event_name}__synced')
+        set_sync_status_to_synced()
+        socketio.emit(PY_SYNCED_WITH_JS)
 
-    def cb():
-        if not sync_lock:
-            socketio.emit(event_name, {'data': py_data_to_sync_data(var.value)})
-
-    watch(var, cb, deep=True)
-
-    if not sync_lock:
-        socketio.emit(event_name, {'data': py_data_to_sync_data(var.value)})
+    watch(var, push_py_to_js, deep=True)
 
 
 if __name__ == '__main__':
