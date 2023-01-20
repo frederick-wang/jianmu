@@ -47,7 +47,6 @@ def is_sync_object(obj: Any) -> bool:
 
 
 def sync_file_data_to_file(file_data: Dict[str, Any]) -> File:
-    print('file_data:', file_data)
     return File(
         lastModified=file_data['lastModified'],
         name=file_data['name'],
@@ -61,7 +60,6 @@ def sync_file_data_to_file(file_data: Dict[str, Any]) -> File:
 
 def file_to_sync_file_data(file: File) -> Dict[str, Any]:
     base64Src = f'data:{file.type};base64,{base64.b64encode(file.bytes).decode()}'
-    print('base64Src:', base64Src)
     return {
         'lastModified': file.lastModified,
         'name': file.name,
