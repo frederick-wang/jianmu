@@ -1,4 +1,5 @@
 # sourcery skip: avoid-builtin-shadow
+import base64
 import contextlib
 import sys
 
@@ -11,14 +12,15 @@ from pathlib import Path
 from typing import Any, Callable, Dict, List
 
 import reactivity as reactivity_module
-from flask import Flask, jsonify, request
+from flask import Flask, request
 from flask_socketio import SocketIO
-from reactivity import (Ref, is_computed_ref, is_reactive, is_ref, reactive,
-                        ref, watch)
+from reactivity import Ref, is_computed_ref, is_ref, watch
 
 from jianmu.datatypes import JSONValue
+from jianmu.definitions import File
 from jianmu.exceptions import JianmuException
 from jianmu.info import jianmu_info
+from jianmu.utils import base64_src_to_bytes
 
 flask_app = Flask(__name__)
 socketio = SocketIO(flask_app, cors_allowed_origins='*')
@@ -36,6 +38,69 @@ for module_name in os.listdir(Path.cwd()):
         del sys.modules[f'src.{module_name}']
 
 from src import app  # type: ignore
+
+
+def is_sync_object(obj: Any) -> bool:
+    # If obj is Dict, and obj has 'protocol', 'version', 'source', 'type', 'data' keys, it is a sync object.
+    return isinstance(
+        obj, dict) and 'protocol' in obj and 'version' in obj and 'source' in obj and 'type' in obj and 'data' in obj
+
+
+def sync_file_data_to_file(file_data: Dict[str, Any]) -> File:
+    print('file_data:', file_data)
+    return File(
+        lastModified=file_data['lastModified'],
+        name=file_data['name'],
+        bytes=base64_src_to_bytes(file_data['base64Src']),
+        path=file_data['path'],
+        size=file_data['size'],
+        type=file_data['type'],
+        webkitRelativePath=file_data['webkitRelativePath'],
+    )
+
+
+def file_to_sync_file_data(file: File) -> Dict[str, Any]:
+    base64Src = f'data:{file.type};base64,{base64.b64encode(file.bytes).decode()}'
+    print('base64Src:', base64Src)
+    return {
+        'lastModified': file.lastModified,
+        'name': file.name,
+        'base64Src': base64Src,
+        'path': file.path,
+        'size': file.size,
+        'type': file.type,
+        'webkitRelativePath': file.webkitRelativePath,
+    }
+
+
+def sync_object_to_py_data(obj: Any) -> Any:
+    # obj is json object
+    if is_sync_object(obj):
+        if obj['type'] == 'File':
+            return sync_file_data_to_file(obj['data'])
+        else:
+            raise JianmuException(f'Unknown sync object type: {obj["type"]}')
+    elif isinstance(obj, list):
+        return [sync_object_to_py_data(item) for item in obj]
+    elif isinstance(obj, dict):
+        return {key: sync_object_to_py_data(value) for key, value in obj.items()}
+    return obj
+
+
+def py_data_to_sync_data(obj: Any) -> Any:
+    if isinstance(obj, File):
+        return {
+            'protocol': 'jianmu-object-sync-protocol',
+            'version': 1,
+            'source': 'javascript',
+            'type': 'File',
+            'data': file_to_sync_file_data(obj),
+        }
+    elif isinstance(obj, list):
+        return [py_data_to_sync_data(item) for item in obj]
+    elif isinstance(obj, dict):
+        return {key: py_data_to_sync_data(value) for key, value in obj.items()}
+    return obj
 
 
 @flask_app.route('/')
@@ -96,7 +161,7 @@ def register_reactive_var(name: str, var: Ref):
 
     @socketio.on(f'{event_name}__get')
     def on_pyvar_get():
-        socketio.emit(event_name, {'data': var.value})
+        socketio.emit(event_name, {'data': py_data_to_sync_data(var.value)})
 
     @socketio.on(event_name)
     def on_pyvar_change(res: 'dict[str, Any]'):
@@ -109,18 +174,18 @@ def register_reactive_var(name: str, var: Ref):
             raise RuntimeError('The data field is missing')
         value = res['data']
         sync_lock = True
-        var.value = value
+        var.value = sync_object_to_py_data(value)
         sync_lock = False
         socketio.emit(f'{event_name}__synced')
 
     def cb():
         if not sync_lock:
-            socketio.emit(event_name, {'data': var.value})
+            socketio.emit(event_name, {'data': py_data_to_sync_data(var.value)})
 
     watch(var, cb, deep=True)
 
     if not sync_lock:
-        socketio.emit(event_name, {'data': var.value})
+        socketio.emit(event_name, {'data': py_data_to_sync_data(var.value)})
 
 
 if __name__ == '__main__':

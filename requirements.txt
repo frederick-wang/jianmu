@@ -5,3 +5,4 @@ gevent-websocket
 requests
 rich
 pyreactivity
+dataclasses
