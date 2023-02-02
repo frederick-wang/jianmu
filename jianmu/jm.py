@@ -163,6 +163,8 @@ def register_reactive_var(name: str, var: Ref):
 
     is_syncing = False
 
+    latest_pushed_py_value = None
+
     def set_sync_status_to_syncing():
         nonlocal is_syncing
         is_syncing = True
@@ -171,12 +173,16 @@ def register_reactive_var(name: str, var: Ref):
     def set_sync_status_to_synced():
         nonlocal is_syncing
         is_syncing = False
+        if latest_pushed_py_value != var.value:
+            push_py_to_js()
 
     @socketio.on(GET_PY_VALUE)
     def push_py_to_js():
+        nonlocal latest_pushed_py_value
         if not is_syncing:
             set_sync_status_to_syncing()
             socketio.emit(PUSH_PY_TO_JS, {'data': py_data_to_sync_data(var.value)})
+            latest_pushed_py_value = var.value
 
     @socketio.on(PUSH_JS_TO_PY)
     def sync_py_with_js(res: 'dict[str, Any]'):
