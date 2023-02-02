@@ -13,17 +13,18 @@ from typing import Any, Callable, Dict, List
 
 import reactivity as reactivity_module
 from flask import Flask, request
-from flask_socketio import SocketIO
 from reactivity import Ref, is_computed_ref, is_ref, watch
 
 from jianmu.datatypes import JSONValue
 from jianmu.definitions import File
 from jianmu.exceptions import JianmuException
 from jianmu.info import jianmu_info
+from jianmu.sock import get_socketio, init_socketio
 from jianmu.utils import datauri_to_bytes
 
 flask_app = Flask(__name__)
-socketio = SocketIO(flask_app, cors_allowed_origins='*')
+init_socketio(flask_app)
+socketio = get_socketio()
 
 for module_name in os.listdir(Path.cwd()):
     if module_name.endswith('.py') and os.path.isfile(module_name):
