@@ -206,6 +206,18 @@ def register_reactive_var(name: str, var: Ref):
     watch(var, push_py_to_js, deep=True)
 
 
+from threading import Lock
+
+push_state_thread_lock = Lock()
+push_state_thread = None
+
+
+def push_state_task():
+    while True:
+        socketio.sleep(1)
+        socketio.emit('my_response', {'data': 'thread test'})
+
+
 if __name__ == '__main__':
     for key, val in app.__dict__.items():
         if key[:2] != '__':
@@ -229,4 +241,9 @@ if __name__ == '__main__':
     # http_server = WSGIServer(('127.0.0.1', 19020), flask_app)
     # http_server.serve_forever()
     # Use socketio.run() instead of http_server.serve_forever() to enable
+
+    with push_state_thread_lock:
+        if push_state_thread is None:
+            push_state_thread = socketio.start_background_task(push_state_task)
+
     socketio.run(flask_app, host='127.0.0.1', port=19020)
