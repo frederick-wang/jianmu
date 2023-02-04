@@ -13,7 +13,7 @@ from typing import Any, Callable, Dict, List
 
 import reactivity as reactivity_module
 from flask import Flask, request
-from reactivity import Ref, is_computed_ref, is_ref, watch
+from reactivity import Ref, is_computed_ref, is_ref, to_raw, watch
 
 from jianmu.datatypes import JSONValue
 from jianmu.definitions import File
@@ -111,6 +111,11 @@ def get_info():
     return jianmu_info, '获取程序信息成功'
 
 
+@flask_app.route('/__jianmu_api__/heartbeat', methods=['GET'])
+def heartbeat():
+    return 'ok'
+
+
 def respond(error: int, message: str, data: JSONValue) -> Dict[str, Any]:
     return {
         'error': error,
@@ -129,11 +134,12 @@ def wrapper(func: Callable):
             if json is None:
                 raise JianmuException('The Content-Type header is not application/json')
             args: List[Any] = json
+            args_num = len(args)
             if param_num:
                 if not args:
                     raise JianmuException('The argument is empty')
-                if param_num != len(args):
-                    raise JianmuException('The number of arguments do not match')
+                if param_num != args_num:
+                    args = [args[i] if i < args_num else None for i in range(param_num)]
                 data = func(*args)
             else:
                 data = func()
@@ -173,7 +179,7 @@ def register_reactive_var(name: str, var: Ref):
     def set_sync_status_to_synced():
         nonlocal is_syncing
         is_syncing = False
-        if latest_pushed_py_value != var.value:
+        if latest_pushed_py_value != to_raw(var.value):
             push_py_to_js()
 
     @socketio.on(GET_PY_VALUE)
@@ -182,7 +188,7 @@ def register_reactive_var(name: str, var: Ref):
         if not is_syncing:
             set_sync_status_to_syncing()
             socketio.emit(PUSH_PY_TO_JS, {'data': py_data_to_sync_data(var.value)})
-            latest_pushed_py_value = var.value
+            latest_pushed_py_value = to_raw(var.value)
 
     @socketio.on(PUSH_JS_TO_PY)
     def sync_py_with_js(res: 'dict[str, Any]'):
