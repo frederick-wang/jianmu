@@ -30,11 +30,12 @@ setup(
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
         'Programming Language :: Python :: 3.10',
+        'Programming Language :: Python :: 3.11',
     ],
     install_requires=['dataclasses', 'Flask', 'flask-socketio', 'gevent', 'gevent-websocket', 'requests', 'rich', 'pyreactivity', 'typing_extensions'],
     packages=setuptools.find_packages(include=['jianmu', 'jianmu.*']),
     entry_points={
         'console_scripts': ['jianmu=jianmu.cli:parse'],
     },
-    python_requires=">=3.7, <=3.10",
+    python_requires=">=3.7",
 )
