@@ -24,7 +24,7 @@ try:
     from matplotlib.figure import Figure
     import matplotlib.pyplot as plt
 
-    def figure_to_datauri(fig: Figure, **kwargs: Any) -> str:
+    def figure_to_datauri(fig: Figure, **kwargs: Any) -> str:  # type: ignore
         format_arg = kwargs.get('format', 'png')
         with BytesIO() as fig_bytes:
             fig.savefig(fig_bytes, format=format_arg, **kwargs)
@@ -33,4 +33,6 @@ try:
             plt.close(fig)
         return datauri
 except ImportError:
-    pass
+
+    def figure_to_datauri(fig: Any, **kwargs: Any) -> str:
+        raise ImportError('matplotlib is not installed')
