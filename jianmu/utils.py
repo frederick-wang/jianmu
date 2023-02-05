@@ -29,7 +29,8 @@ try:
         with BytesIO() as fig_bytes:
             fig.savefig(fig_bytes, format=format_arg, **kwargs)
             fig_bytes.seek(0)
-            datauri = 'data:image/png;base64,' + base64.b64encode(fig_bytes.read()).decode('utf-8')
+            b64_str = base64.b64encode(fig_bytes.read()).decode('utf-8')
+            datauri = f'data:image/{format_arg};base64,{b64_str}'
             plt.close(fig)
         return datauri
 except ImportError:
