@@ -1,5 +1,7 @@
-from typing import Any, Callable, List, Optional
+from typing import Any, Callable, List, Literal, Optional, Union
+
 from typing_extensions import NotRequired, TypedDict
+
 from .sock import get_socketio
 
 
@@ -213,3 +215,101 @@ def beep() -> None:
         if can_be_returned:
             return None
         socketio.sleep(0.05)  # type: ignore
+
+
+class ElMessageBaseOptions(TypedDict):
+    message: NotRequired[str]
+    icon: NotRequired[str]
+    dangerouslyUseHTMLString: NotRequired[bool]
+    customClass: NotRequired[str]
+    duration: NotRequired[float]
+    showClose: NotRequired[bool]
+    center: NotRequired[bool]
+    offset: NotRequired[float]
+    appendTo: NotRequired[str]
+    grouping: NotRequired[bool]
+
+
+class ElMessageOptions(ElMessageBaseOptions):
+    type: NotRequired[Literal['success', 'warning', 'info', 'error']]
+
+
+ElMessageSuccessOptions = ElMessageBaseOptions
+ElMessageWarningOptions = ElMessageBaseOptions
+ElMessageInfoOptions = ElMessageBaseOptions
+ElMessageErrorOptions = ElMessageBaseOptions
+
+
+class ElMessageType:
+
+    def __call__(self,
+                 options: Optional[Union[ElMessageOptions, str]] = None,
+                 *,
+                 callback: Optional[Callable[[], Any]] = None) -> Any:
+        if options is None:
+            options = {}
+
+        if callback is None:
+            callback = lambda: None
+
+        socketio = get_socketio()
+        socketio.emit('Action:el-message', {'args': [options]}, callback=callback)
+
+    def success(self,
+                options: Optional[Union[ElMessageSuccessOptions, str]] = None,
+                *,
+                callback: Optional[Callable[[], Any]] = None) -> Any:
+        if options is None:
+            options = {}
+
+        if callback is None:
+            callback = lambda: None
+
+        socketio = get_socketio()
+        socketio.emit('Action:el-message.success', {'args': [options]}, callback=callback)
+
+    def warning(self,
+                options: Optional[Union[ElMessageWarningOptions, str]] = None,
+                *,
+                callback: Optional[Callable[[], Any]] = None) -> Any:
+        if options is None:
+            options = {}
+
+        if callback is None:
+            callback = lambda: None
+
+        socketio = get_socketio()
+        socketio.emit('Action:el-message.warning', {'args': [options]}, callback=callback)
+
+    def info(self,
+             options: Optional[Union[ElMessageInfoOptions, str]] = None,
+             *,
+             callback: Optional[Callable[[], Any]] = None) -> Any:
+        if options is None:
+            options = {}
+
+        if callback is None:
+            callback = lambda: None
+
+        socketio = get_socketio()
+        socketio.emit('Action:el-message.info', {'args': [options]}, callback=callback)
+
+    def error(self,
+              options: Optional[Union[ElMessageErrorOptions, str]] = None,
+              *,
+              callback: Optional[Callable[[], Any]] = None) -> Any:
+        if options is None:
+            options = {}
+
+        if callback is None:
+            callback = lambda: None
+
+        socketio = get_socketio()
+        socketio.emit('Action:el-message.error', {'args': [options]}, callback=callback)
+
+    def closeAll(self, type: Optional[Literal['success', 'warning', 'info', 'error']] = None) -> None:
+        socketio = get_socketio()
+        socketio.emit('Action:el-message.close-all', {'args': [type]})
+
+
+ElMessage = ElMessageType()
