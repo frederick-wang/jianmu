@@ -1,20 +1,22 @@
 # sourcery skip: avoid-builtin-shadow
-import base64
-import contextlib
 import sys
 
 sys.stdout = open(sys.stdout.fileno(), mode='w', encoding='utf8', buffering=1)  # Set stdout to unbuffered mode
 sys.stderr = open(sys.stderr.fileno(), mode='w', encoding='utf8', buffering=1)  # Set stderr to unbuffered mode
 
+import base64
+import contextlib
 import os
 from inspect import signature
 from pathlib import Path
-from typing import Any, Callable, Dict, List
+from types import ModuleType
+from typing import Any, Callable, Dict, List, Set
 
 import reactivity as reactivity_module
 from flask import Flask, request
 from reactivity import Ref, is_computed_ref, is_ref, to_raw, watch
 
+import jianmu as jianmu_module
 from jianmu.datatypes import JSONValue
 from jianmu.definitions import File
 from jianmu.exceptions import JianmuException
@@ -26,19 +28,32 @@ flask_app = Flask(__name__)
 init_socketio(flask_app)
 socketio = get_socketio()
 
+src_modules: Dict[str, ModuleType] = {}
+
 for module_name in os.listdir(Path.cwd()):
     if module_name.endswith('.py') and os.path.isfile(module_name):
         module_name = module_name[:-3]
     if module_name.startswith('__') and module_name.endswith('__'):
         continue
-    if module_name == 'app':
-        continue
     with contextlib.suppress(ImportError):
-        module = __import__(f'src.{module_name}', fromlist=[module_name])
+        module = __import__(f'src.{module_name}', fromlist=(module_name,))
         sys.modules[module_name] = module
         del sys.modules[f'src.{module_name}']
+        src_modules[module_name] = module
 
-from src import app  # type: ignore
+# Check if the default entry point (app) exists.
+if 'app' not in src_modules:
+    raise ImportError(
+        'No app.py found in the src directory. Please create one. You must have a file named app.py in the src directory as the default entry point of your app.'
+    )
+
+# Add all members of reactivity and jianmu to builtin_member_ids and then ignore them.
+builtin_member_ids: Set[int] = {id(member) for member in reactivity_module.__dict__.values()}
+builtin_member_ids.update({id(member) for member in jianmu_module.__dict__.values()})
+registered_id_map: Dict[int, Any] = {}
+'''Map from id in memory to its instance.'''
+registered_name_map: Dict[str, Any] = {}
+'''Map from name (var, func) to its instance'''
 
 
 def is_sync_object(obj: Any) -> bool:
@@ -124,10 +139,10 @@ def respond(error: int, message: str, data: JSONValue) -> Dict[str, Any]:
     }
 
 
-def wrapper(func: Callable):
+def wrapper(func_name: str, func: Callable):
 
     def view_func():
-        sys.stdout.write(f'Function {func.__name__} is called.\n')
+        sys.stdout.write(f'Function {func_name} is called.\n')
         try:
             param_num = len(signature(func).parameters)
             json = request.get_json()
@@ -165,7 +180,7 @@ def register_reactive_var(name: str, var: Ref):
     PUSH_JS_TO_PY = f'{event_name}__push_js_to_py'
     PY_SYNCED_WITH_JS = f'{event_name}__py_synced_with_js'
     JS_SYNCED_WITH_PY = f'{event_name}__js_synced_with_py'
-    is_computed = is_computed_ref(val)
+    is_computed = is_computed_ref(member)
 
     is_syncing = False
 
@@ -206,44 +221,39 @@ def register_reactive_var(name: str, var: Ref):
     watch(var, push_py_to_js, deep=True)
 
 
-from threading import Lock
-
-push_state_thread_lock = Lock()
-push_state_thread = None
-
-
-def push_state_task():
-    while True:
-        socketio.sleep(1)
-        socketio.emit('my_response', {'data': 'thread test'})
+def register_member(module_name: str, member_name: str, member: Any):
+    member_id = id(member)
+    if member_id in builtin_member_ids:
+        return
+    member_fullname = f'{module_name}.{member_name}'
+    if is_ref(member):  # Reactive Variable
+        # TODO: 暂时不支持变量的多名称注册
+        if member_id in registered_id_map:
+            return
+        register_reactive_var(member_fullname, member)
+        registered_id_map[member_id] = member
+        registered_name_map[member_fullname] = member
+        sys.stderr.write(f'Reactive Variable {member_fullname} is registered.\n')
+    elif callable(member):  # Python Function
+        if isinstance(member, type):
+            return
+        rule = f'/api/{member_fullname}'
+        if member_id in registered_id_map:
+            view_func = registered_id_map[member_id]
+        else:
+            view_func = wrapper(member_fullname, member)
+            registered_id_map[member_id] = view_func
+            registered_name_map[member_fullname] = view_func
+        flask_app.add_url_rule(rule, member_fullname, view_func, methods=['POST'])
+        sys.stderr.write(f'Python Function {member_fullname} is registered.\n')
 
 
 if __name__ == '__main__':
-    for key, val in app.__dict__.items():
-        if key[:2] != '__':
-            if is_ref(val):  # Reactive Variable
-                var_name = key
-                var = val
-                register_reactive_var(var_name, var)
-                sys.stderr.write(f'Reactive Variable {var_name} is registered.\n')
-            elif callable(val):  # Python Function
-                if isinstance(val, type):
-                    continue
-                func_name = key
-                func = val
-                if func_name in reactivity_module.__dict__:
-                    continue
-                rule = f'/api/{func_name}'
-                view_func = wrapper(func)
-                sys.stderr.write(f'Python Function {func_name} is registered.\n')
-                flask_app.add_url_rule(rule, func_name, view_func, methods=['POST'])
-    flask_app.add_url_rule('/api/info', 'info', wrapper(get_info), methods=['POST'])
-    # http_server = WSGIServer(('127.0.0.1', 19020), flask_app)
-    # http_server.serve_forever()
-    # Use socketio.run() instead of http_server.serve_forever() to enable
+    for module_name, module in src_modules.items():
+        for member_name, member in module.__dict__.items():
+            if member_name[:2] == '__':
+                continue
+            register_member(module_name, member_name, member)
 
-    with push_state_thread_lock:
-        if push_state_thread is None:
-            push_state_thread = socketio.start_background_task(push_state_task)
-
+    flask_app.add_url_rule('/api/info', 'info', wrapper('info', get_info), methods=['POST'])
     socketio.run(flask_app, host='127.0.0.1', port=19020)
