@@ -1,3 +1,4 @@
+import os
 import shutil
 import subprocess
 import sys
@@ -7,8 +8,7 @@ from typing import List
 
 
 def init_parser(subparsers):
-    parser: ArgumentParser = subparsers.add_parser(
-        'dev', help='Run the jianmu application in development mode.')
+    parser: ArgumentParser = subparsers.add_parser('dev', help='Run the jianmu application in development mode.')
     parser.set_defaults(func=__func)
 
 
@@ -31,14 +31,22 @@ def __func(args):
         '--project-path',
         str(PROJECT_PATH),
     ]
+    # env variables
+    JIANMUENV_NPX_PATH = NPX_PATH
+    JIANMUENV_PYTHON_PATH = PYTHON_PATH
+    JIANMUENV_JIANMU_PATH = str(JIANMU_PATH)
+    JIANMUENV_PROJECT_PATH = str(PROJECT_PATH)
+    env = {
+        **os.environ,
+        'JIANMUENV_NPX_PATH': JIANMUENV_NPX_PATH,
+        'JIANMUENV_PYTHON_PATH': JIANMUENV_PYTHON_PATH,
+        'JIANMUENV_JIANMU_PATH': JIANMUENV_JIANMU_PATH,
+        'JIANMUENV_PROJECT_PATH': JIANMUENV_PROJECT_PATH,
+    }
     try:
-        subprocess.run(run_jianmu_js_args, cwd=PROJECT_PATH)
+        subprocess.run(run_jianmu_js_args, cwd=PROJECT_PATH, env=env)
     except KeyboardInterrupt as e:
-        print(
-            ' * Getted KeyboardInterrupt, Jianmu Development Server has been stopped.'
-        )
+        print(' * Getted KeyboardInterrupt, Jianmu Development Server has been stopped.')
     except Exception as e:
-        print(
-            ' * Something went wrong, Jianmu Development Server has been stopped.'
-        )
+        print(' * Something went wrong, Jianmu Development Server has been stopped.')
         print(e)
